@@ -1,19 +1,19 @@
 package com.greenidea.templete.base;
 
 import android.os.Bundle;
+import android.os.Handler;
+import android.os.Message;
 import android.support.v7.app.ActionBarActivity;
 import android.view.KeyEvent;
 import android.widget.Toast;
-import com.greenidea.templete.R;
 import com.greenidea.templete.utils.UserAwareRunnable;
 
-import java.util.ArrayList;
-import java.util.List;
 import java.util.Stack;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
-public class BaseBarActivity extends ActionBarActivity {
+public class BaseBarActivity extends ActionBarActivity
+{
 
     private static ExecutorService pool;
 
@@ -21,16 +21,17 @@ public class BaseBarActivity extends ActionBarActivity {
 
     /**
      * 在其他线程中执行任务，并在界面弹出提示框提示用户
+     *
      * @param runnable
      * @param handler
      */
     protected void doUserAwareJob(Runnable runnable, UserAwareRunnable.Handler handler)
     {
-        if(null == userAwareRunnableList)
+        if (null == userAwareRunnableList)
         {
             userAwareRunnableList = new Stack<UserAwareRunnable>();
         }
-        if(null == pool)
+        if (null == pool)
         {
             pool = Executors.newCachedThreadPool();
         }
@@ -42,9 +43,9 @@ public class BaseBarActivity extends ActionBarActivity {
     }
 
     @Override
-    public void onCreate(Bundle savedInstanceState) {
+    public void onCreate(Bundle savedInstanceState)
+    {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.main);
     }
 
     public void showToast(String msg)
@@ -58,10 +59,30 @@ public class BaseBarActivity extends ActionBarActivity {
         switch (keyCode)
         {
             case KeyEvent.KEYCODE_BACK:
-                return super.onKeyDown(keyCode, event);
+                UserAwareRunnable runnable = userAwareRunnableList.pop();
+                if (null != runnable)
+                {
+                    runnable.interrupt();
+                } else
+                {
+                    return super.onKeyDown(keyCode, event);
+                }
             default:
                 return super.onKeyDown(keyCode, event);
         }
     }
 
+    private class ShowToastHandler extends Handler
+    {
+        @Override
+        public void handleMessage(Message msg)
+        {
+            Toast.makeText(getApplicationContext(), (String)msg.obj, Toast.LENGTH_SHORT).show();
+        }
+    }
+
+    /**
+     * 用于跨线程提示信息的handler
+     */
+    public ShowToastHandler showToastHandler = new ShowToastHandler();
 }

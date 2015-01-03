@@ -59,6 +59,13 @@ public class UserAwareRunnable implements Runnable {
         private String message;
         private ProgressDialog dialog;
 
+        private boolean superCalled = false;
+
+        /**
+         *
+         * @param hostActivity 归属Activity
+         * @param message 提示信息
+         */
         public Handler(BaseBarActivity hostActivity, String message) {
             this.hostActivity = hostActivity;
             this.message = message;
@@ -82,9 +89,21 @@ public class UserAwareRunnable implements Runnable {
         }
 
         @Override
+        public void dispatchMessage(Message msg) {
+            super.dispatchMessage(msg);
+
+            if(!superCalled)
+            {
+                throw new RuntimeException("需要在handleMessage中调用父类的handleMessage！");
+            }
+        }
+
+        @Override
         public void handleMessage(Message msg)
         {
             dialog.dismiss();
+
+            superCalled = true;
         }
     }
 }
